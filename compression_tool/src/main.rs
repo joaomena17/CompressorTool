@@ -4,19 +4,14 @@
 use std::env;
 use std::fs::File;
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 enum FuncMode {
     Encode,
     Decode,
 }
 
-
-fn main() {
-    // accept file as input and return error if it is not valid
-
-    // collect CLI arguments
-    let args: Vec<String> = env::args().collect();
-
-    // validate arguments
+fn parse_args(args: Vec<String>) -> (FuncMode, String){
     match args.len(){
         1 => {
             panic!("No arguments inserted");
@@ -27,32 +22,44 @@ fn main() {
         }
 
         3 => {
+            // get source file name from arguments
+            let source_name: String = args[2].clone();
+
             match &args[1][..] {
                 "encode" => {
-                    let mode: FuncMode = FuncMode::Encode;
+                    let func_mode = FuncMode::Encode;
+                    (func_mode, source_name)
                 }
                 "decode" => {
-                    let mode: FuncMode = FuncMode::Decode;
+                    let  func_mode = FuncMode::Decode;
+                    (func_mode, source_name)
                 }
                 _ => {
                     panic!("Invalid mode argument");
                 },
             }
         }
-
         _ => { panic!("Too many arguments"); }
     }
+}
 
-    // get source file name from arguments
-    let source_name: String = args[2].clone();
+
+fn main() {
+    // accept file as input and return error if it is not valid
+
+    // collect CLI arguments
+    let args: Vec<String> = env::args().collect();
+
+    // validate arguments
+    let (_mode, source_name) = parse_args(args);
 
     // open the file
-    let source_file = match File::open(source_name){
+    let _source_file = match File::open(&source_name){
         Ok(file) => file,
         Err(err) => panic!("Unable to open the file: {:?}", err),
     };
 
-    // determine the occurence of each character
+    // determine the frequency of occurence of each character
 
     // verify table: There are 333 occurrences of ‘X’ and 223000 of ‘t’
 
@@ -83,3 +90,44 @@ fn main() {
     return;
 }
 
+#[cfg(test)]
+mod tests {
+    use crate::{parse_args, FuncMode};
+
+    #[test]
+    #[should_panic(expected = "No arguments inserted")]
+    fn parse_no_args_fail() {
+        let mut args = Vec::new();
+        args.push("compression_tool/target/debug".to_string());
+        parse_args(args);
+    }
+
+    #[test]
+    #[should_panic(expected = "Insufficent arguments")]
+    fn parse_one_args_fail() {
+        let mut args = Vec::new();
+        args.push("compression_tool/target/debug".to_string());
+        args.push("encode".to_string());
+        parse_args(args);
+    }
+
+    #[test]
+    #[should_panic(expected = "Too many arguments")]
+    fn parse_too_many_args_fail() {
+        let mut args = Vec::new();
+        args.push("compression_tool/target/debug".to_string());
+        args.push("encode".to_string());
+        args.push("../book.txt".to_string());
+        args.push("something_extra".to_string());
+        parse_args(args);
+    }
+
+    #[test]
+    fn parse_two_args_pass() {
+        let mut args = Vec::new();
+        args.push("compression_tool/target/debug".to_string());
+        args.push("encode".to_string());
+        args.push("../book.txt".to_string());
+        assert_eq!(parse_args(args), (FuncMode::Encode, String::from("../book.txt")));
+    }
+}
