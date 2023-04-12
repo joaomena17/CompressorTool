@@ -1,8 +1,11 @@
 // Compression Tool project using Huffman's algorithm
 // Following the guide: https://codingchallenges.substack.com/p/coding-challenge-3
 
+extern crate iterate_text;
+use iterate_text::file::characters::IterateFileCharacters;
+
 use std::env;
-use std::fs::File;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -43,6 +46,17 @@ fn parse_args(args: Vec<String>) -> (FuncMode, String){
     }
 }
 
+fn frequency_of_occurency(path: String) -> HashMap<String, i32> {
+    let mut frequency_table: HashMap<String, i32> = HashMap::new();
+    let iterator = IterateFileCharacters::new(path);
+    for character in iterator {
+        let curr_char_counter = frequency_table.entry(character.to_string().clone()).or_insert(0);
+        *curr_char_counter += 1;
+    }
+
+    frequency_table
+}
+
 
 fn main() {
     // accept file as input and return error if it is not valid
@@ -54,12 +68,8 @@ fn main() {
     let (_mode, source_name) = parse_args(args);
 
     // open the file
-    let _source_file = match File::open(&source_name){
-        Ok(file) => file,
-        Err(err) => panic!("Unable to open the file: {:?}", err),
-    };
-
     // determine the frequency of occurence of each character
+    let _frequency_table: HashMap<String, i32> = frequency_of_occurency(source_name);
 
     // verify table: There are 333 occurrences of ‘X’ and 223000 of ‘t’
 
@@ -92,7 +102,9 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse_args, FuncMode};
+    use super::*;
+
+    use crate::{parse_args, FuncMode, frequency_of_occurency};
 
     #[test]
     #[should_panic(expected = "No arguments inserted")]
@@ -129,5 +141,14 @@ mod tests {
         args.push("encode".to_string());
         args.push("../book.txt".to_string());
         assert_eq!(parse_args(args), (FuncMode::Encode, String::from("../book.txt")));
+    }
+
+    #[test]
+    fn frequency_of_upper_x_and_t(){
+        let table: HashMap<String, i32> = frequency_of_occurency("../book.txt".to_string());
+        let freq_of_upper_x: i32 = table.get("X").unwrap().clone();
+        let freq_of_t: i32 = table.get("t").unwrap().clone();
+        assert_eq!(freq_of_upper_x, 333);
+        assert_eq!(freq_of_t, 223000);
     }
 }
