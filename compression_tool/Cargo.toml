@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 iterate-text = "0.0.1"
+
+[lib]
+name = "huff"
+path = "src/huff_utils.rs"
